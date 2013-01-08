@@ -9,6 +9,7 @@
 #  updated_at      :datetime         not null
 #  password_digest :string(255)
 #  remember_token  :string(255)
+#  admin           :boolean          default(FALSE)
 #
 
 require 'spec_helper'
@@ -56,18 +57,36 @@ describe User do
   end
 
   describe "return value of authenticate method" do
-  before { @user.save }
-  let(:found_user) { User.find_by_email(@user.email) }
+    before { @user.save }
+    let(:found_user) { User.find_by_email(@user.email) }
 
-  describe "with valid password" do
-    it { should == found_user.authenticate(@user.password) }
+    describe "with valid password" do
+      it { should == found_user.authenticate(@user.password) }
+    end
+
+    describe "with invalid password" do
+      let(:user_for_invalid_password) { found_user.authenticate("invalid") }
+
+      it { should_not == user_for_invalid_password }
+      specify { user_for_invalid_password.should be_false }
+    end
   end
 
-  describe "with invalid password" do
-    let(:user_for_invalid_password) { found_user.authenticate("invalid") }
+  it { should respond_to(:admin) }
+  it { should respond_to(:authenticate) }
 
-    it { should_not == user_for_invalid_password }
-    specify { user_for_invalid_password.should be_false }
+  it { should be_valid }
+  it { should_not be_admin }
+
+  describe "with admin attribute set to 'true'" do
+    before do
+      @user.save!
+      @user.toggle!(:admin)
+    end
+
+    it { should be_admin }
   end
+
+
 end
-end
+
